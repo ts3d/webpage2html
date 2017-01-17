@@ -315,6 +315,11 @@ def main():
     if args.insecure:
         kwargs['verify'] = False
     rs = generate(args.url, **kwargs)
+    
+    # remove any byte order markers that may make their way into the output
+    rs = rs.decode('utf-8')
+    rs = rs.replace(u'\ufeff', '')
+    
     if args.out:
         out_file = codecs.open(args.out, 'w', 'utf-8')
         out_file.write(rs)
