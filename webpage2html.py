@@ -279,7 +279,7 @@ usage:
 options:
 
     -h, --help              help page, you are reading this now!
-    -q, --quite             don't show verbose url get log in stderr
+    -q, --quiet             don't show verbose url get log in stderr
     -s, --script            keep javascript in the generated html
 
 examples:
@@ -302,12 +302,12 @@ examples:
 def main():
     kwargs = {}
     parser = argparse.ArgumentParser()
-    parser.add_argument('-q', '--quite', action='store_true', help="don't show verbose url get log in stderr")
+    parser.add_argument('-q', '--quiet', action='store_true', help="don't show verbose url get log in stderr")
     parser.add_argument('-s', '--script', action='store_true', help="keep javascript in the generated html ")
     parser.add_argument('-k', '--insecure', action='store_true', help="ignore the certificate")
     parser.add_argument("url", help="the website to store")
     args = parser.parse_args()
-    if args.quite:
+    if args.quiet:
         kwargs['verbose'] = False
     if args.script:
         kwargs['keep_script'] = True
