@@ -113,25 +113,26 @@ def data_to_base64(index, src, verbose=True):
     sp = urlparse.urlparse(src).path
     if src.strip().startswith('data:'):
         return src
-    if sp.lower().endswith('png'):
+    path_lower = sp.lower()
+    if path_lower.endswith('png'):
         fmt = 'image/png'
-    elif sp.lower().endswith('gif'):
+    elif path_lower.endswith('gif'):
         fmt = 'image/gif'
-    elif sp.lower().endswith('jpg') or src.lower().endswith('jpeg'):
+    elif path_lower.endswith('jpg') or path_lower.endswith('jpeg'):
         fmt = 'image/jpg'
-    elif sp.lower().endswith('svg'):
+    elif path_lower.endswith('svg'):
         fmt = 'image/svg+xml'
-    elif sp.lower().endswith('ttf'):
+    elif path_lower.endswith('ttf'):
         fmt = 'application/x-font-ttf'
-    elif sp.lower().endswith('otf'):
+    elif path_lower.endswith('otf'):
         fmt = 'application/x-font-opentype'
-    elif sp.lower().endswith('woff'):
+    elif path_lower.endswith('woff'):
         fmt = 'application/font-woff'
-    elif sp.lower().endswith('woff2'):
+    elif path_lower.endswith('woff2'):
         fmt = 'application/font-woff2'
-    elif sp.lower().endswith('eot'):
+    elif path_lower.endswith('eot'):
         fmt = 'application/vnd.ms-fontobject'
-    elif sp.lower().endswith('sfnt'):
+    elif path_lower.endswith('sfnt'):
         fmt = 'application/font-sfnt'
     else:
         # what if it's not a valid font type? may not matter
