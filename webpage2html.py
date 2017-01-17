@@ -305,6 +305,7 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true', help="don't show verbose url get log in stderr")
     parser.add_argument('-s', '--script', action='store_true', help="keep javascript in the generated html ")
     parser.add_argument('-k', '--insecure', action='store_true', help="ignore the certificate")
+    parser.add_argument('-o', '--out', help="write to a file")
     parser.add_argument("url", help="the website to store")
     args = parser.parse_args()
     if args.quiet:
@@ -314,7 +315,11 @@ def main():
     if args.insecure:
         kwargs['verify'] = False
     rs = generate(args.url, **kwargs)
-    sys.stdout.write(rs)
+    if args.out:
+        out_file = codecs.open(args.out, 'w', 'utf-8')
+        out_file.write(rs)
+    else:
+        sys.stdout.write(rs)
 
 if __name__ == '__main__':
     main()
