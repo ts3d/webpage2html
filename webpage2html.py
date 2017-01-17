@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os, sys, re, base64, urlparse, urllib2, urllib, datetime
-from bs4 import BeautifulSoup
+import argparse
+import codecs
 import lxml
 import requests
-import argparse
-
-re_css_url = re.compile('(url\(.*?\))')
+from bs4 import BeautifulSoup
 
 try:
     from termcolor import colored
@@ -15,6 +14,8 @@ except:
     def colored(text, color=None, on_color=None, attrs=None):
         return text
 
+
+re_css_url = re.compile(r'(url\(.*?\))')
 
 def log(s, color=None, on_color=None, attrs=None, new_line=True):
     if not color:
@@ -43,21 +44,24 @@ def get(index, relpath=None, verbose=True, usecache=True, verify=True):
     if index.startswith('http') or (relpath and relpath.startswith('http')):
         fullpath = absurl(index, relpath)
         if not fullpath:
-            if verbose: log('[ WARN ] invalid path, %s %s' % (index, relpath), 'yellow')
+            if verbose:
+                log('[ WARN ] invalid path, %s %s' % (index, relpath), 'yellow')
             return '', None
         # urllib2 only accepts valid url, the following code is taken from urllib
         # http://svn.python.org/view/python/trunk/Lib/urllib.py?r1=71780&r2=71779&pathrev=71780
         fullpath = urllib.quote(fullpath, safe="%/:=&?~#+!$,;'@()*[]")
         if usecache:
             if fullpath in webpage2html_cache:
-                if verbose: log('[ CACHE HIT ] - %s' % fullpath)
+                if verbose:
+                    log('[ CACHE HIT ] - %s' % fullpath)
                 return webpage2html_cache[fullpath], None
         headers = {
             'User-Agent': 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Win64; x64; Trident/6.0)'
         }
         try:
             response = requests.get(fullpath, headers=headers, verify=verify)
-            if verbose: log('[ GET ] %d - %s' % (response.status_code, response.url))
+            if verbose:
+                log('[ GET ] %d - %s' % (response.status_code, response.url))
             if response.status_code >= 400 or response.status_code < 200:
                 content = ''
             # elif response.headers.get('content-type', '').lower().startswith('text/'):
@@ -68,7 +72,8 @@ def get(index, relpath=None, verbose=True, usecache=True, verify=True):
                 webpage2html_cache[response.url] = content
             return content, response.url
         except Exception as ex:
-            if verbose: log('[ WARN ] %s - %s %s' % ('???', fullpath, ex), 'yellow')
+            if verbose:
+                log('[ WARN ] %s - %s %s' % ('???', fullpath, ex), 'yellow')
             return '', None
 
     elif os.path.exists(index):
@@ -80,21 +85,26 @@ def get(index, relpath=None, verbose=True, usecache=True, verify=True):
                 fullpath = os.path.normpath(os.path.join(os.path.dirname(index), relpath))
             try:
                 ret = open(fullpath, 'rb').read()
-                if verbose: log('[ LOCAL ] found - %s' % fullpath)
+                if verbose:
+                    log('[ LOCAL ] found - %s' % fullpath)
                 return ret, None
             except IOError, err:
-                if verbose: log('[ WARN ] file not found - %s %s' % (fullpath, str(err)), 'yellow')
+                if verbose:
+                    log('[ WARN ] file not found - %s %s' % (fullpath, str(err)), 'yellow')
                 return '', None
         else:
             try:
                 ret = open(index, 'rb').read()
-                if verbose: log('[ LOCAL ] found - %s' % index)
+                if verbose:
+                    log('[ LOCAL ] found - %s' % index)
                 return ret, None
             except IOError, err:
-                if verbose: log('[ WARN ] file not found - %s %s' % (index, str(err)), 'yellow')
+                if verbose:
+                    log('[ WARN ] file not found - %s %s' % (index, str(err)), 'yellow')
                 return '', None
     else:
-        if verbose: log('[ ERROR ] invalid index - %s' % index, 'red')
+        if verbose:
+            log('[ ERROR ] invalid index - %s' % index, 'red')
         return '', None
 
 
@@ -167,7 +177,6 @@ def generate(index, verbose=True, comment=True, keep_script=False, prettify=Fals
     given a index url such as http://www.google.com, http://custom.domain/index.html
     return generated single html
     '''
-    origin_index = index
     html_doc, new_index = get(index, verbose=verbose, verify=verify)
 
     if new_index: index = new_index
@@ -176,8 +185,7 @@ def generate(index, verbose=True, comment=True, keep_script=False, prettify=Fals
     soup = BeautifulSoup(html_doc, 'lxml')
     for link in soup('link'):
         if link.get('href'):
-            if (link.get('type') == 'text/css' or link['href'].lower().endswith('.css') or 'stylesheet' in (
-                link.get('rel') or [])):
+            if link.get('type') == 'text/css' or link['href'].lower().endswith('.css') or 'stylesheet' in link.get('rel', []):
                 # skip css hosted by google
                 # if link['href'].lower().startswith('http://fonts.googleapis.com'): continue
                 new_type = 'text/css' if not link.get('type') else link['type']
@@ -197,7 +205,8 @@ def generate(index, verbose=True, comment=True, keep_script=False, prettify=Fals
         if not keep_script:
             js.replace_with('')
             continue
-        if not js.get('src'): continue
+        if not js.get('src'):
+            continue
         new_type = 'text/javascript' if not js.has_attr('type') or not js['type'] else js['type']
         code = soup.new_tag('script', type=new_type)
         code['data-src'] = js['src']
@@ -213,19 +222,22 @@ def generate(index, verbose=True, comment=True, keep_script=False, prettify=Fals
                 # code.string = '<![CDATA[\n' + js_str.replace(']]>', ']]]]><![CDATA[>') + '\n]]>'
                 code.string = js_str.encode('utf-8')
         except:
-            if verbose: log(repr(js_str))
+            if verbose:
+                log(repr(js_str))
             raise
         # print >> sys.stderr, js is None, code is None, type(js), type(code), len(code.string)
         js.replace_with(code)
     for img in soup('img'):
-        if not img.get('src'): continue
+        if not img.get('src'):
+            continue
         img['data-src'] = img['src']
         img['src'] = data_to_base64(index, img['src'], verbose=verbose)
 
         def check_alt(attr):
             if img.has_attr(attr) and img[attr].startswith('this.src='):
                 # we do not handle this situation yet, just warn the user
-                if verbose: log('[ WARN ] %s found in img tag and unhandled, which may break page' % (attr), 'yellow')
+                if verbose:
+                    log('[ WARN ] %s found in img tag and unhandled, which may break page' % (attr), 'yellow')
 
         check_alt('onerror')
         check_alt('onmouseover')
